@@ -35,7 +35,7 @@ void buffer_free(Buffer* rb) {
 int buffer_push_tail(Buffer* rb, const uint8_t* data, int size) {
   int free_space = (rb->size + rb->head - rb->tail - 1) % rb->size;
 
-  int align_size = ALIGN32(size + 4);
+  int align_size = ALIGN32(size) + 4;
 
   if (align_size > free_space) {
     LOGE("no enough space");
@@ -45,6 +45,7 @@ int buffer_push_tail(Buffer* rb, const uint8_t* data, int size) {
   int tail_end = (rb->tail + align_size) % rb->size;
 
   if (tail_end < rb->tail) {
+
     if (rb->head < align_size) {
       LOGE("no enough space");
       return -1;
@@ -53,7 +54,7 @@ int buffer_push_tail(Buffer* rb, const uint8_t* data, int size) {
     int* p = (int*)(rb->data + rb->tail);
     *p = size;
     memcpy(rb->data, data, size);
-    rb->tail = size;
+    rb->tail = ALIGN32(size);
 
   } else {
     int* p = (int*)(rb->data + rb->tail);
@@ -67,12 +68,13 @@ int buffer_push_tail(Buffer* rb, const uint8_t* data, int size) {
 
 uint8_t* buffer_peak_head(Buffer* rb, int* size) {
   if (!rb || rb->head == rb->tail) {
+
     return NULL;
   }
 
   *size = *((int*)(rb->data + rb->head));
 
-  int align_size = ALIGN32(*size + 4);
+  int align_size = ALIGN32(*size) + 4;
 
   int head_end = (rb->head + align_size) % rb->size;
 
@@ -80,6 +82,7 @@ uint8_t* buffer_peak_head(Buffer* rb, int* size) {
     return rb->data;
 
   } else {
+
     return rb->data + (rb->head + 4);
   }
 }
@@ -91,14 +94,15 @@ void buffer_pop_head(Buffer* rb) {
 
   int* size = (int*)(rb->data + rb->head);
 
-  int align_size = ALIGN32(*size + 4);
+  int align_size = ALIGN32(*size) + 4;
 
   int head_end = (rb->head + align_size) % rb->size;
 
   if (head_end < rb->head) {
-    rb->head = *size;
+    rb->head = ALIGN32(*size);
 
   } else {
+
     rb->head = rb->head + align_size;
   }
 }
